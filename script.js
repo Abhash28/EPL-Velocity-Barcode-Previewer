@@ -1,10 +1,43 @@
 /* ============================================================
-   UNICOMMERCE EPL / VELOCITY PREVIEWER
-============================================================ */
+   UNICOMMERCE EPL + VELOCITY PREVIEWER
+   ============================================================
+
+   IMPORTANT:
+
+   JSON ORDER DOES NOT MATTER
+   JSON CAPITALIZATION DOES NOT MATTER
+
+   UniCommerce mapping:
+
+   ?
+   $row.getColumnValue('ProductCode')
+   $row.getColumnValue('MRP')
+
+   automatically means:
+
+   V00 -> ProductCode
+   V01 -> MRP
+
+   Example:
+
+   ?
+   $row.getColumnValue('Brand')
+   $row.getColumnValue('SKU')
+   $row.getColumnValue('Color')
+   $row.getColumnValue('Size')
+
+   means:
+
+   V00 -> Brand
+   V01 -> SKU
+   V02 -> Color
+   V03 -> Size
+
+   ============================================================ */
 
 /* ============================================================
    STATE
-============================================================ */
+   ============================================================ */
 
 const state = {
   zoom: 1,
@@ -28,246 +61,49 @@ const state = {
   errors: [],
 
   warnings: [],
+
+  rows: [],
+
+  mappings: [],
+
+  variables: {},
 };
 
 /* ============================================================
    DOM
-============================================================ */
+   ============================================================ */
 
 const $ = (id) => document.getElementById(id);
 
 const eplCode = $("eplCode");
-
 const dataJson = $("dataJson");
 
 const labelWidth = $("labelWidth");
-
 const labelHeight = $("labelHeight");
-
 const dpi = $("dpi");
-
 const layers = $("layers");
-
 const gap = $("gap");
 
 const previewViewport = $("previewViewport");
-
 const previewCanvas = $("previewCanvas");
-
 const previewPaper = $("previewPaper");
 
 const previewInfo = $("previewInfo");
-
 const physicalInfo = $("physicalInfo");
-
 const dotInfo = $("dotInfo");
-
 const layerInfo = $("layerInfo");
-
 const objectInfo = $("objectInfo");
-
 const statusInfo = $("statusInfo");
-
 const zoomValue = $("zoomValue");
 
 const jsonStatus = $("jsonStatus");
 
 const validationSummary = $("validationSummary");
-
 const validationMessages = $("validationMessages");
 
 /* ============================================================
-   SAMPLE DATA
-============================================================ */
-
-const SAMPLE_DATA = {
-  ProductCode: "ETH-CAP-ESLC-BLUE",
-
-  SKU: "ETH-CAP-ESLC-BLUE",
-
-  MRP: "999.00",
-
-  Name: "Ethansports",
-
-  Color: "BLUE",
-
-  Size: "M",
-
-  QTY: "1",
-
-  Brand: "Ethansports",
-
-  Barcode: "8901234567890",
-
-  Category: "CAP",
-
-  Description: "Blue Sports Cap",
-};
-
-/* ============================================================
-   REALISTIC TEST EPL
-
-   Notice the correct A syntax:
-
-   A20,10,0,1,2,2,N,"Ethansports"
-
-   This should now display text.
-============================================================ */
-
-const SAMPLE_EPL = `FK"1"
-FS"1"
-
-V00,50,N,""
-V01,50,N,""
-V02,50,N,""
-V03,50,N,""
-V04,50,N,""
-V05,50,N,""
-
-A20,10,0,1,2,2,N,"Ethansports"
-A20,45,0,1,1,2,N,"SKU:"V00
-A20,70,0,1,1,1,N,"QTY:"V02
-A20,95,0,1,1,1,N,"MRP:"V01
-A20,120,0,1,1,1,N,"COLOR:"V03
-A20,145,0,1,1,1,N,"SIZE:"V04
-B20,170,0,1,2,3,30,N,V05
-
-A350,10,0,1,2,2,N,"{{Name}}"
-A350,45,0,1,1,2,N,"SKU:"$row.getColumnValue('SKU')
-A350,70,0,1,1,1,N,"QTY:"$row.getColumnValue('QTY')
-A350,95,0,1,1,1,N,"MRP:"$row.getColumnValue('MRP')
-A350,120,0,1,1,1,N,"COLOR:"$row.getColumnValue('Color')
-A350,145,0,1,1,1,N,"SIZE:"$row.getColumnValue('Size')
-B350,170,0,1,2,3,30,N,$row.getColumnValue('Barcode')
-
-#foreach($row in $rows)
-FR"1"
-?
-$row.getColumnValue('ProductCode')
-$row.getColumnValue('MRP')
-#end
-
-FE`;
-
-/* ============================================================
-   INCH -> DOTS
-============================================================ */
-
-function inchToDots(value, dpiValue) {
-  return Math.round(Number(value) * Number(dpiValue));
-}
-
-/* ============================================================
-   CALCULATE PAPER
-============================================================ */
-
-function calculateDimensions() {
-  const widthInch = Math.max(0.1, parseFloat(labelWidth.value) || 2);
-
-  const heightInch = Math.max(0.1, parseFloat(labelHeight.value) || 1);
-
-  const dpiValue = parseInt(dpi.value, 10) || 203;
-
-  const layerCount = Math.max(1, parseInt(layers.value, 10) || 1);
-
-  const gapInch = Math.max(0, parseFloat(gap.value) || 0);
-
-  state.dpi = dpiValue;
-
-  state.layers = layerCount;
-
-  state.labelWidthDots = inchToDots(widthInch, dpiValue);
-
-  state.labelHeightDots = inchToDots(heightInch, dpiValue);
-
-  state.gapDots = inchToDots(gapInch, dpiValue);
-
-  state.totalWidthDots =
-    state.labelWidthDots * state.layers +
-    state.gapDots * Math.max(0, state.layers - 1);
-
-  state.totalHeightDots = state.labelHeightDots;
-
-  previewInfo.textContent =
-    `${widthInch} × ${heightInch} inch | ` +
-    `${state.layers} layer` +
-    (state.layers > 1 ? "s" : "");
-
-  physicalInfo.textContent = `${widthInch} × ${heightInch} inch`;
-
-  dotInfo.textContent =
-    `${state.totalWidthDots} × ` +
-    `${state.totalHeightDots} dots @ ` +
-    `${dpiValue} DPI`;
-
-  layerInfo.textContent = state.layers;
-}
-
-/* ============================================================
-   JSON PARSER
-============================================================ */
-
-function parseJsonData() {
-  try {
-    const data = JSON.parse(dataJson.value || "{}");
-
-    if (!data || Array.isArray(data) || typeof data !== "object") {
-      throw new Error("JSON must be an object.");
-    }
-
-    jsonStatus.textContent = "✓ JSON is valid";
-
-    jsonStatus.className = "json-status ok";
-
-    return data;
-  } catch (error) {
-    jsonStatus.textContent = `✗ ${error.message}`;
-
-    jsonStatus.className = "json-status error";
-
-    return {};
-  }
-}
-
-/* ============================================================
-   DATA VALUE
-============================================================ */
-
-function getDataValue(data, field) {
-  if (field === undefined || field === null) {
-    return "";
-  }
-
-  const name = String(field).trim();
-
-  /*
-    Direct field.
-  */
-
-  if (Object.prototype.hasOwnProperty.call(data, name)) {
-    return valueToString(data[name]);
-  }
-
-  /*
-    Case insensitive.
-  */
-
-  const lower = name.toLowerCase();
-
-  const actualKey = Object.keys(data).find(
-    (key) => key.toLowerCase() === lower,
-  );
-
-  if (actualKey) {
-    return valueToString(data[actualKey]);
-  }
-
-  return "";
-}
-
-/* ============================================================
-   VALUE TO STRING
-============================================================ */
+   SAFE VALUE
+   ============================================================ */
 
 function valueToString(value) {
   if (value === undefined || value === null) {
@@ -282,55 +118,471 @@ function valueToString(value) {
 }
 
 /* ============================================================
-   VELOCITY REPLACEMENT
+   NORMALIZE FIELD NAME
+   ============================================================
+
+   Makes these equivalent:
+
+   SKU
+   sku
+   Sku
+   sKu
+
+   Also handles:
+
+   ProductCode
+   product_code
+   product-code
+   PRODUCTCODE
+
+   ============================================================ */
+
+function normalizeFieldName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]/g, "");
+}
+
+/* ============================================================
+   GET JSON VALUE - CASE INSENSITIVE
+   ============================================================ */
+
+function getDataValue(data, field) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return "";
+  }
+
+  const wanted = normalizeFieldName(field);
+
+  const actualKey = Object.keys(data).find(
+    (key) => normalizeFieldName(key) === wanted,
+  );
+
+  if (!actualKey) {
+    return "";
+  }
+
+  return valueToString(data[actualKey]);
+}
+
+/* ============================================================
+   PARSE JSON
+   ============================================================ */
+
+function parseJsonData() {
+  try {
+    const raw = String(dataJson?.value || "").trim();
+
+    if (!raw) {
+      throw new Error("JSON is empty.");
+    }
+
+    const parsed = JSON.parse(raw);
+
+    if (jsonStatus) {
+      jsonStatus.textContent = "✓ JSON is valid";
+
+      jsonStatus.className = "json-status ok";
+    }
+
+    return parsed;
+  } catch (error) {
+    if (jsonStatus) {
+      jsonStatus.textContent = `✗ ${error.message}`;
+
+      jsonStatus.className = "json-status error";
+    }
+
+    state.errors.push(`JSON error: ${error.message}`);
+
+    return {};
+  }
+}
+
+/* ============================================================
+   GET ROWS
+   ============================================================
 
    Supports:
 
-   $row.getColumnValue('SKU')
+   1.
 
-   $row.getColumnValue("SKU")
+   {
+     "SKU":"ABC",
+     "MRP":"299"
+   }
 
-   {{SKU}}
+   2.
 
-   ${SKU}
-============================================================ */
+   [
+     {
+       "SKU":"ABC"
+     },
+     {
+       "SKU":"XYZ"
+     }
+   ]
 
-function replaceVelocity(text, data) {
+   3.
+
+   {
+     "rows":[
+       {
+         "SKU":"ABC"
+       }
+     ]
+   }
+
+   ============================================================ */
+
+function getRows(data) {
+  if (Array.isArray(data)) {
+    return data.filter(
+      (row) => row && typeof row === "object" && !Array.isArray(row),
+    );
+  }
+
+  if (data && typeof data === "object" && Array.isArray(data.rows)) {
+    return data.rows.filter(
+      (row) => row && typeof row === "object" && !Array.isArray(row),
+    );
+  }
+
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    return [data];
+  }
+
+  return [];
+}
+
+/* ============================================================
+   DIMENSIONS
+   ============================================================ */
+
+function inchToDots(value, dpiValue) {
+  return Math.round(Number(value) * Number(dpiValue));
+}
+
+function calculateDimensions(rowCount) {
+  const widthInch = Math.max(0.1, parseFloat(labelWidth?.value) || 2);
+
+  const heightInch = Math.max(0.1, parseFloat(labelHeight?.value) || 1);
+
+  const dpiValue = parseInt(dpi?.value, 10) || 203;
+
+  const layerCount = Math.max(1, parseInt(layers?.value, 10) || 1);
+
+  const gapInch = Math.max(0, parseFloat(gap?.value) || 0);
+
+  state.dpi = dpiValue;
+
+  state.layers = layerCount;
+
+  state.labelWidthDots = inchToDots(widthInch, dpiValue);
+
+  state.labelHeightDots = inchToDots(heightInch, dpiValue);
+
+  state.gapDots = inchToDots(gapInch, dpiValue);
+
+  /*
+     IMPORTANT:
+
+     Layers are horizontal.
+
+     Rows are vertical.
+  */
+
+  state.totalWidthDots =
+    state.labelWidthDots * state.layers +
+    state.gapDots * Math.max(0, state.layers - 1);
+
+  state.totalHeightDots = state.labelHeightDots * Math.max(1, rowCount);
+
+  if (previewInfo) {
+    previewInfo.textContent =
+      `${widthInch} × ${heightInch} inch | ` +
+      `${state.layers} layer` +
+      (state.layers > 1 ? "s" : "") +
+      ` | ${rowCount} row` +
+      (rowCount !== 1 ? "s" : "");
+  }
+
+  if (physicalInfo) {
+    physicalInfo.textContent = `${widthInch} × ${heightInch} inch`;
+  }
+
+  if (dotInfo) {
+    dotInfo.textContent =
+      `${state.totalWidthDots} × ` +
+      `${state.totalHeightDots} dots @ ` +
+      `${dpiValue} DPI`;
+  }
+
+  if (layerInfo) {
+    layerInfo.textContent = state.layers;
+  }
+}
+
+/* ============================================================
+   FIND EPL VARIABLES
+   ============================================================
+
+   Finds:
+
+   V00
+   V01
+   V02
+   ...
+
+   from:
+
+   V00,50,N,""
+   V01,50,N,""
+
+   ============================================================ */
+
+function extractVariables(code) {
+  const found = [];
+
+  const regex = /^\s*V(\d+)\s*,/gim;
+
+  let match;
+
+  while ((match = regex.exec(code)) !== null) {
+    const variable = "V" + String(match[1]).padStart(2, "0");
+
+    if (!found.includes(variable)) {
+      found.push(variable);
+    }
+  }
+
+  found.sort(
+    (a, b) => parseInt(a.substring(1), 10) - parseInt(b.substring(1), 10),
+  );
+
+  return found;
+}
+
+/* ============================================================
+   FIND FOREACH BLOCK
+   ============================================================ */
+
+function getForeachBlock(code) {
+  const match = String(code).match(
+    /#foreach\s*\(\s*\$row\s+in\s+\$rows\s*\)([\s\S]*?)#end/i,
+  );
+
+  if (!match) {
+    return {
+      exists: false,
+      body: "",
+    };
+  }
+
+  return {
+    exists: true,
+    body: match[1],
+  };
+}
+
+/* ============================================================
+   EXTRACT VELOCITY MAPPING
+   ============================================================
+
+   THIS IS THE MAIN FIX.
+
+   Example:
+
+   #foreach($row in $rows)
+   FR"1"
+   ?
+   $row.getColumnValue('ProductCode')
+   $row.getColumnValue('MRP')
+   #end
+
+   becomes:
+
+   V00 -> ProductCode
+   V01 -> MRP
+
+   ============================================================ */
+
+function extractVelocityMapping(code) {
+  const variables = extractVariables(code);
+
+  const mappings = [];
+
+  const foreachInfo = getForeachBlock(code);
+
+  if (!foreachInfo.exists) {
+    return {
+      variables,
+      mappings,
+    };
+  }
+
+  const body = foreachInfo.body;
+
+  /*
+     Find ?
+
+     The question mark is the beginning
+     of the UniCommerce variable data section.
+  */
+
+  const questionMatch = body.match(/^\s*\?\s*$/im);
+
+  if (!questionMatch) {
+    return {
+      variables,
+      mappings,
+    };
+  }
+
+  const questionPosition = questionMatch.index;
+
+  const afterQuestion = body.substring(
+    questionPosition + questionMatch[0].length,
+  );
+
+  /*
+     Read every Velocity expression
+     after ?
+  */
+
+  const velocityFields = [];
+
+  const regex = /\$row\.getColumnValue\(\s*['"]([^'"]+)['"]\s*\)/gi;
+
+  let match;
+
+  while ((match = regex.exec(afterQuestion)) !== null) {
+    velocityFields.push(match[1].trim());
+  }
+
+  /*
+     POSITIONAL MAPPING
+
+     First field -> V00
+     Second field -> V01
+     Third field -> V02
+
+     etc.
+  */
+
+  velocityFields.forEach((field, index) => {
+    if (!variables[index]) {
+      state.warnings.push(`Velocity field "${field}" has no EPL variable.`);
+
+      return;
+    }
+
+    mappings.push({
+      variable: variables[index],
+
+      field,
+
+      index,
+    });
+  });
+
+  return {
+    variables,
+    mappings,
+  };
+}
+
+/* ============================================================
+   BUILD VARIABLES FOR CURRENT ROW
+   ============================================================ */
+
+function buildVariables(row, mappings, variables) {
+  const result = {};
+
+  /*
+     Initialize.
+  */
+
+  variables.forEach((variable) => {
+    result[variable] = "";
+  });
+
+  /*
+     Apply Velocity mapping.
+  */
+
+  mappings.forEach((mapping) => {
+    result[mapping.variable] = getDataValue(row, mapping.field);
+  });
+
+  /*
+     Direct V00 JSON fallback.
+
+     Example:
+
+     {
+       "v00":"ABC"
+     }
+
+     works too.
+  */
+
+  variables.forEach((variable) => {
+    if (result[variable] !== "") {
+      return;
+    }
+
+    const direct = getDataValue(row, variable);
+
+    if (direct !== "") {
+      result[variable] = direct;
+    }
+  });
+
+  return result;
+}
+
+/* ============================================================
+   VELOCITY REPLACEMENT
+   ============================================================ */
+
+function replaceVelocity(text, row) {
   let result = String(text || "");
 
   /*
-    $row.getColumnValue('field')
+     $row.getColumnValue('SKU')
   */
 
   result = result.replace(
-    /\$row\.getColumnValue\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /\$row\.getColumnValue\(\s*['"]([^'"]+)['"]\s*\)/gi,
 
     (complete, field) => {
-      return getDataValue(data, field);
+      return getDataValue(row, field);
     },
   );
 
   /*
-    {{field}}
+     {{SKU}}
   */
 
   result = result.replace(
     /\{\{\s*([^{}]+?)\s*\}\}/g,
 
     (complete, field) => {
-      return getDataValue(data, field.trim());
+      return getDataValue(row, field.trim());
     },
   );
 
   /*
-    ${field}
+     ${SKU}
   */
 
   result = result.replace(
     /\$\{\s*([^{}]+?)\s*\}/g,
 
     (complete, field) => {
-      return getDataValue(data, field.trim());
+      return getDataValue(row, field.trim());
     },
   );
 
@@ -338,92 +590,15 @@ function replaceVelocity(text, data) {
 }
 
 /* ============================================================
-   V00-V99
-
-   Automatic mapping.
-
-   V00 = ProductCode/SKU
-   V01 = MRP
-   V02 = QTY
-   V03 = Color
-   V04 = Size
-   V05 = Barcode
-
-   No mapping UI.
-============================================================ */
-
-function createVariables(code, data) {
-  const variables = {};
-
-  /*
-    Find V declarations.
-  */
-
-  const regex = /^V(\d+),/gm;
-
-  let match;
-
-  while ((match = regex.exec(code)) !== null) {
-    const variable = "V" + String(match[1]).padStart(2, "0");
-
-    variables[variable] = "";
-  }
-
-  const automaticFields = {
-    V00: ["ProductCode", "SKU"],
-
-    V01: ["MRP"],
-
-    V02: ["QTY", "Quantity"],
-
-    V03: ["Color"],
-
-    V04: ["Size"],
-
-    V05: ["Barcode", "ProductCode", "SKU"],
-  };
-
-  Object.keys(variables).forEach((variable) => {
-    const fields = automaticFields[variable] || [];
-
-    /*
-        Search automatic fields.
-      */
-
-    for (const field of fields) {
-      const value = getDataValue(data, field);
-
-      if (value !== "") {
-        variables[variable] = value;
-
-        return;
-      }
-    }
-
-    /*
-        Direct JSON V00 etc.
-      */
-
-    const direct = getDataValue(data, variable);
-
-    if (direct !== "") {
-      variables[variable] = direct;
-    }
-  });
-
-  return variables;
-}
-
-/* ============================================================
-   REPLACE V00-V99
-============================================================ */
+   EPL VARIABLE REPLACEMENT
+   ============================================================ */
 
 function replaceVariables(text, variables) {
   return String(text || "").replace(
     /\bV\d{2}\b/g,
 
     (variable) => {
-      if (variables[variable] !== undefined) {
+      if (Object.prototype.hasOwnProperty.call(variables, variable)) {
         return variables[variable];
       }
 
@@ -433,10 +608,42 @@ function replaceVariables(text, variables) {
 }
 
 /* ============================================================
-   SPLIT EPL PARAMETERS
+   CLEAN EPL TEXT
+   ============================================================ */
 
-   Commas inside quotes are preserved.
-============================================================ */
+function cleanText(raw, variables, row) {
+  let text = String(raw || "");
+
+  /*
+     Velocity first.
+  */
+
+  text = replaceVelocity(text, row);
+
+  /*
+     EPL variables second.
+  */
+
+  text = replaceVariables(text, variables);
+
+  /*
+     Remove EPL quotes.
+
+     "SKU:"V00
+
+     becomes:
+
+     SKU:ABHASH
+  */
+
+  text = text.replace(/"/g, "");
+
+  return text;
+}
+
+/* ============================================================
+   SPLIT EPL
+   ============================================================ */
 
 function splitEpl(text) {
   const result = [];
@@ -471,84 +678,15 @@ function splitEpl(text) {
 }
 
 /* ============================================================
-   CLEAN TEXT DATA
+   PARSE A TEXT COMMAND
+   ============================================================ */
 
-   Handles:
-
-   "Hello"
-
-   "SKU:"V00
-
-   "SKU:"$row.getColumnValue('SKU')
-
-   {{SKU}}
-============================================================ */
-
-function cleanText(raw, variables, data) {
-  let text = String(raw || "");
-
-  /*
-    Velocity first.
-  */
-
-  text = replaceVelocity(text, data);
-
-  /*
-    V00 etc.
-  */
-
-  text = replaceVariables(text, variables);
-
-  /*
-    Remove EPL quotes.
-
-    "SKU:"V00
-    becomes
-    SKU:ABC123
-  */
-
-  text = text.replace(/"/g, "");
-
-  return text;
-}
-
-/* ============================================================
-   PARSE EPL TEXT COMMAND
-
-   CORRECT EPL:
-
-   A20,10,0,1,2,2,N,"Ethansports"
-
-   Parameters:
-
-   X
-   Y
-   Rotation
-   Font
-   Horizontal multiplier
-   Vertical multiplier
-   Reverse
-   DATA
-============================================================ */
-
-function parseTextCommand(line, variables, data) {
-  /*
-    Must start with A + X.
-  */
-
+function parseTextCommand(line, variables, row) {
   if (!/^A\s*-?\d+/i.test(line)) {
     return null;
   }
 
-  /*
-    Remove first A.
-  */
-
   const body = line.substring(1).trim();
-
-  /*
-    X ends at first comma.
-  */
 
   const firstComma = body.indexOf(",");
 
@@ -562,36 +700,9 @@ function parseTextCommand(line, variables, data) {
     return null;
   }
 
-  /*
-    Remaining parameters.
-
-    For:
-
-    A20,10,0,1,2,2,N,"Hello"
-
-    this becomes:
-
-    10
-    0
-    1
-    2
-    2
-    N
-    "Hello"
-
-    = 7 items.
-  */
-
   const remaining = body.substring(firstComma + 1);
 
   const parts = splitEpl(remaining);
-
-  /*
-    IMPORTANT:
-
-    EPL A command requires 7 parameters
-    after X.
-  */
 
   if (parts.length < 7) {
     return null;
@@ -607,18 +718,13 @@ function parseTextCommand(line, variables, data) {
 
   const vertical = Math.max(1, parseInt(parts[4], 10) || 1);
 
-  const reverse = (parts[5] || "N").replace(/"/g, "").toUpperCase();
-
-  /*
-    DATA starts at index 6.
-
-    We join the rest because the text may
-    contain commas.
-  */
+  const reverse = String(parts[5] || "N")
+    .replace(/"/g, "")
+    .toUpperCase();
 
   const rawData = parts.slice(6).join(",");
 
-  const text = cleanText(rawData, variables, data);
+  const text = cleanText(rawData, variables, row);
 
   return {
     type: "text",
@@ -642,25 +748,10 @@ function parseTextCommand(line, variables, data) {
 }
 
 /* ============================================================
-   PARSE BARCODE COMMAND
+   PARSE B BARCODE COMMAND
+   ============================================================ */
 
-   CORRECT EPL:
-
-   B20,170,0,1,2,3,30,N,V05
-
-   Parameters after X:
-
-   Y
-   Rotation
-   Barcode type
-   Narrow
-   Wide
-   Height
-   Human readable
-   Data
-============================================================ */
-
-function parseBarcodeCommand(line, variables, data) {
+function parseBarcodeCommand(line, variables, row) {
   if (!/^B\s*-?\d+/i.test(line)) {
     return null;
   }
@@ -668,10 +759,6 @@ function parseBarcodeCommand(line, variables, data) {
   const body = line.substring(1).trim();
 
   const parts = splitEpl(body);
-
-  /*
-    X + 8 remaining fields.
-  */
 
   if (parts.length < 9) {
     return null;
@@ -683,7 +770,9 @@ function parseBarcodeCommand(line, variables, data) {
 
   const rotation = (((parseInt(parts[2], 10) || 0) % 4) + 4) % 4;
 
-  const barcodeType = String(parts[3] || "1").replace(/"/g, "");
+  const barcodeType = String(parts[3] || "1")
+    .replace(/"/g, "")
+    .toUpperCase();
 
   const narrowBar = Math.max(1, parseInt(parts[4], 10) || 1);
 
@@ -698,13 +787,17 @@ function parseBarcodeCommand(line, variables, data) {
     .replace(/"/g, "")
     .toUpperCase();
 
-  /*
-    DATA is index 8.
-  */
-
   let barcodeData = parts.slice(8).join(",");
 
-  barcodeData = replaceVelocity(barcodeData, data);
+  /*
+     Velocity first.
+  */
+
+  barcodeData = replaceVelocity(barcodeData, row);
+
+  /*
+     EPL V variables second.
+  */
 
   barcodeData = replaceVariables(barcodeData, variables);
 
@@ -734,10 +827,86 @@ function parseBarcodeCommand(line, variables, data) {
 }
 
 /* ============================================================
-   PARSE EPL
-============================================================ */
+   IMPORTANT:
+   GET EPL COMMANDS ONLY
+   ============================================================
 
-function parseEpl(code, variables, data) {
+   THIS FIXES YOUR BLANK PREVIEW.
+
+   Your template is:
+
+   EPL COMMANDS
+   ...
+   PA1,1
+   FE
+
+   #foreach(...)
+   FR"1"
+   ?
+   Velocity mappings
+   #end
+
+   We MUST NOT take the foreach body as EPL.
+
+   We only REMOVE:
+
+   #foreach...
+   #end
+
+   and remove the mapping-only lines.
+
+   The A/B commands outside foreach remain.
+   ============================================================ */
+
+function getRenderableEpl(code) {
+  let result = String(code || "");
+
+  /*
+     Remove entire foreach block.
+
+     IMPORTANT:
+
+     We do NOT replace it with the body.
+
+     We remove it completely.
+
+     Because your actual A/B EPL is OUTSIDE
+     the foreach block.
+  */
+
+  result = result.replace(
+    /#foreach\s*\(\s*\$row\s+in\s+\$rows\s*\)[\s\S]*?#end/gi,
+    "",
+  );
+
+  /*
+     Remove standalone Velocity mapping
+     expressions if they somehow exist
+     outside the loop.
+  */
+
+  result = result.replace(/^\s*\$row\.getColumnValue\([^)]*\)\s*$/gim, "");
+
+  /*
+     Remove ?
+     */
+
+  result = result.replace(/^\s*\?\s*$/gim, "");
+
+  /*
+     Remove FR.
+  */
+
+  result = result.replace(/^\s*FR.*$/gim, "");
+
+  return result;
+}
+
+/* ============================================================
+   PARSE EPL
+   ============================================================ */
+
+function parseEpl(code, variables, row) {
   const objects = [];
 
   const lines = code.split(/\r?\n/);
@@ -750,7 +919,7 @@ function parseEpl(code, variables, data) {
     }
 
     /*
-        Ignore comments.
+         Comments
       */
 
     if (line.startsWith(";")) {
@@ -758,11 +927,29 @@ function parseEpl(code, variables, data) {
     }
 
     /*
-        EPL TEXT
+         Control commands
+      */
+
+    if (
+      /^FK/i.test(line) ||
+      /^FS/i.test(line) ||
+      /^V\d+/i.test(line) ||
+      /^PA/i.test(line) ||
+      /^FE/i.test(line) ||
+      /^FR/i.test(line) ||
+      /^\?/i.test(line) ||
+      /^#foreach/i.test(line) ||
+      /^#end/i.test(line)
+    ) {
+      return;
+    }
+
+    /*
+         A TEXT
       */
 
     if (/^A\s*-?\d+/i.test(line)) {
-      const object = parseTextCommand(line, variables, data);
+      const object = parseTextCommand(line, variables, row);
 
       if (object) {
         object.line = index + 1;
@@ -774,11 +961,11 @@ function parseEpl(code, variables, data) {
     }
 
     /*
-        EPL BARCODE
+         B BARCODE
       */
 
     if (/^B\s*-?\d+/i.test(line)) {
-      const object = parseBarcodeCommand(line, variables, data);
+      const object = parseBarcodeCommand(line, variables, row);
 
       if (object) {
         object.line = index + 1;
@@ -788,24 +975,6 @@ function parseEpl(code, variables, data) {
 
       return;
     }
-
-    /*
-        Everything else is kept in textarea
-        but isn't a visual object.
-
-        Examples:
-
-        FK
-        FS
-        V
-        FR
-        ?
-        #foreach
-        #end
-        $row.getColumnValue
-        FE
-        PA
-      */
   });
 
   return objects;
@@ -813,7 +982,7 @@ function parseEpl(code, variables, data) {
 
 /* ============================================================
    FONT SIZE
-============================================================ */
+   ============================================================ */
 
 function getFontSize(font) {
   const sizes = {
@@ -832,16 +1001,24 @@ function getFontSize(font) {
 }
 
 /* ============================================================
-   GET LABEL X
-============================================================ */
+   LAYER X
+   ============================================================ */
 
 function getLabelStartX(layerIndex) {
   return layerIndex * (state.labelWidthDots + state.gapDots);
 }
 
 /* ============================================================
-   FIND LAYER
-============================================================ */
+   ROW Y
+   ============================================================ */
+
+function getLabelStartY(rowIndex) {
+  return rowIndex * state.labelHeightDots;
+}
+
+/* ============================================================
+   GET LAYER
+   ============================================================ */
 
 function getLayerForX(x) {
   const slotWidth = state.labelWidthDots + state.gapDots;
@@ -855,7 +1032,7 @@ function getLayerForX(x) {
 
 /* ============================================================
    LOCAL X
-============================================================ */
+   ============================================================ */
 
 function getLocalX(x, layerIndex) {
   return x - getLabelStartX(layerIndex);
@@ -863,7 +1040,7 @@ function getLocalX(x, layerIndex) {
 
 /* ============================================================
    TEXT BOUNDS
-============================================================ */
+   ============================================================ */
 
 function getTextBounds(object) {
   const fontSize = getFontSize(object.font);
@@ -892,7 +1069,7 @@ function getTextBounds(object) {
 
 /* ============================================================
    BARCODE BOUNDS
-============================================================ */
+   ============================================================ */
 
 function getBarcodeBounds(object) {
   const length = Math.max(1, object.data.length);
@@ -918,51 +1095,69 @@ function getBarcodeBounds(object) {
 
 /* ============================================================
    CREATE LABELS
-============================================================ */
+   ============================================================ */
 
-function createLabels() {
-  for (let i = 0; i < state.layers; i++) {
-    const label = document.createElement("div");
+function createLabels(rowCount) {
+  const labels = [];
 
-    label.className = "epl-label";
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    for (let layerIndex = 0; layerIndex < state.layers; layerIndex++) {
+      const label = document.createElement("div");
 
-    label.style.left = `${getLabelStartX(i)}px`;
+      label.className = "epl-label";
 
-    label.style.top = "0px";
+      label.style.position = "absolute";
 
-    label.style.width = `${state.labelWidthDots}px`;
+      label.style.left = `${getLabelStartX(layerIndex)}px`;
 
-    label.style.height = `${state.labelHeightDots}px`;
+      label.style.top = `${getLabelStartY(rowIndex)}px`;
 
-    /*
-      Grid.
-    */
+      label.style.width = `${state.labelWidthDots}px`;
 
-    const grid = document.createElement("div");
+      label.style.height = `${state.labelHeightDots}px`;
 
-    grid.className = "coordinate-grid";
+      label.style.boxSizing = "border-box";
 
-    label.appendChild(grid);
+      /*
+         Grid
+      */
 
-    /*
-      Layer name.
-    */
+      const grid = document.createElement("div");
 
-    const title = document.createElement("div");
+      grid.className = "coordinate-grid";
 
-    title.className = "layer-title";
+      label.appendChild(grid);
 
-    title.textContent = `Layer ${i + 1}`;
+      /*
+         Title
+      */
 
-    label.appendChild(title);
+      const title = document.createElement("div");
 
-    previewPaper.appendChild(label);
+      title.className = "layer-title";
+
+      title.textContent = `Row ${rowIndex + 1} / Layer ${layerIndex + 1}`;
+
+      label.appendChild(title);
+
+      previewPaper.appendChild(label);
+
+      labels.push({
+        rowIndex,
+
+        layerIndex,
+
+        element: label,
+      });
+    }
   }
+
+  return labels;
 }
 
 /* ============================================================
-   CREATE TEXT ELEMENT
-============================================================ */
+   CREATE TEXT
+   ============================================================ */
 
 function createTextElement(object) {
   const element = document.createElement("div");
@@ -971,13 +1166,13 @@ function createTextElement(object) {
 
   element.textContent = object.text;
 
-  const fontSize = getFontSize(object.font);
+  element.style.position = "absolute";
 
   element.style.left = `${object.localX}px`;
 
   element.style.top = `${object.y}px`;
 
-  element.style.fontSize = `${fontSize}px`;
+  element.style.fontSize = `${getFontSize(object.font)}px`;
 
   element.style.fontWeight = "bold";
 
@@ -987,21 +1182,17 @@ function createTextElement(object) {
 
   element.style.visibility = "visible";
 
-  element.style.opacity = "1";
-
   element.style.display = "block";
+
+  element.style.opacity = "1";
 
   element.style.whiteSpace = "pre";
 
   element.style.width = "max-content";
 
+  element.style.height = "auto";
+
   element.style.zIndex = "100";
-
-  /*
-    Scale + rotation.
-
-    CSS applies scale first and rotation second.
-  */
 
   element.style.transform = `scale(
       ${object.horizontal},
@@ -1010,10 +1201,6 @@ function createTextElement(object) {
     rotate(
       ${object.rotation * 90}deg
     )`;
-
-  /*
-    Reverse image.
-  */
 
   if (object.reverse === "R") {
     element.style.color = "#ffffff";
@@ -1026,7 +1213,7 @@ function createTextElement(object) {
 
 /* ============================================================
    BARCODE FORMAT
-============================================================ */
+   ============================================================ */
 
 function getBarcodeFormat(type) {
   const map = {
@@ -1050,12 +1237,14 @@ function getBarcodeFormat(type) {
 
 /* ============================================================
    CREATE BARCODE
-============================================================ */
+   ============================================================ */
 
 function createBarcodeElement(object) {
   const wrapper = document.createElement("div");
 
   wrapper.className = "epl-barcode";
+
+  wrapper.style.position = "absolute";
 
   wrapper.style.left = `${object.localX}px`;
 
@@ -1071,14 +1260,40 @@ function createBarcodeElement(object) {
 
   const format = getBarcodeFormat(object.barcodeType);
 
+  /*
+     Check JsBarcode
+  */
+
+  if (typeof JsBarcode !== "function") {
+    wrapper.textContent = data;
+
+    wrapper.style.fontWeight = "bold";
+
+    return wrapper;
+  }
+
   try {
-    JsBarcode(
-      svg,
+    JsBarcode(svg, data, {
+      format,
 
-      data,
+      width: Math.max(1, object.narrowBar),
 
-      {
-        format,
+      height: object.height,
+
+      displayValue: object.humanReadable === "Y",
+
+      margin: 0,
+
+      fontSize: 10,
+
+      textMargin: 2,
+    });
+  } catch (error) {
+    console.warn("Barcode error:", error);
+
+    try {
+      JsBarcode(svg, data, {
+        format: "CODE128",
 
         width: Math.max(1, object.narrowBar),
 
@@ -1087,33 +1302,7 @@ function createBarcodeElement(object) {
         displayValue: object.humanReadable === "Y",
 
         margin: 0,
-
-        fontSize: 10,
-
-        textMargin: 2,
-      },
-    );
-  } catch (error) {
-    console.warn("Barcode fallback:", error);
-
-    try {
-      JsBarcode(
-        svg,
-
-        data,
-
-        {
-          format: "CODE128",
-
-          width: Math.max(1, object.narrowBar),
-
-          height: object.height,
-
-          displayValue: object.humanReadable === "Y",
-
-          margin: 0,
-        },
-      );
+      });
     } catch (error2) {
       wrapper.textContent = data;
     }
@@ -1127,34 +1316,36 @@ function createBarcodeElement(object) {
 }
 
 /* ============================================================
-   VALIDATION
-============================================================ */
+   VALIDATE
+   ============================================================ */
 
-function validateObject(object, bounds) {
+function validateObject(object, bounds, rowIndex) {
   if (object.localX < 0) {
     state.errors.push(
-      `Line ${object.line}: X is outside Layer ${object.layer + 1}.`,
+      `Row ${rowIndex + 1}, line ${object.line}: X is outside label.`,
     );
   }
 
   if (object.localX + bounds.width > state.labelWidthDots) {
     state.errors.push(
-      `Line ${object.line}: object exceeds Layer ${object.layer + 1} width.`,
+      `Row ${rowIndex + 1}, line ${object.line}: object exceeds label width.`,
     );
   }
 
   if (object.y < 0) {
-    state.errors.push(`Line ${object.line}: negative Y coordinate.`);
+    state.errors.push(`Row ${rowIndex + 1}, line ${object.line}: negative Y.`);
   }
 
   if (object.y + bounds.height > state.labelHeightDots) {
-    state.errors.push(`Line ${object.line}: object exceeds label height.`);
+    state.errors.push(
+      `Row ${rowIndex + 1}, line ${object.line}: object exceeds label height.`,
+    );
   }
 }
 
 /* ============================================================
-   OVERLAPS
-============================================================ */
+   OVERLAP
+   ============================================================ */
 
 function detectOverlaps(objects) {
   for (let i = 0; i < objects.length; i++) {
@@ -1162,6 +1353,10 @@ function detectOverlaps(objects) {
       const a = objects[i];
 
       const b = objects[j];
+
+      if (a.rowIndex !== b.rowIndex) {
+        continue;
+      }
 
       if (a.layer !== b.layer) {
         continue;
@@ -1175,7 +1370,7 @@ function detectOverlaps(objects) {
 
       if (overlap) {
         state.warnings.push(
-          `Possible overlap between line ${a.line} and line ${b.line}.`,
+          `Possible overlap: row ${a.rowIndex + 1}, line ${a.line} and line ${b.line}.`,
         );
       }
     }
@@ -1183,236 +1378,14 @@ function detectOverlaps(objects) {
 }
 
 /* ============================================================
-   RENDER
-============================================================ */
-
-function renderPreview() {
-  /*
-    1. Dimensions
-  */
-
-  calculateDimensions();
-
-  /*
-    2. Reset
-  */
-
-  state.objects = [];
-
-  state.errors = [];
-
-  state.warnings = [];
-
-  /*
-    3. Clear
-  */
-
-  previewPaper.innerHTML = "";
-
-  /*
-    4. Paper dimensions
-  */
-
-  previewPaper.style.width = `${state.totalWidthDots}px`;
-
-  previewPaper.style.height = `${state.totalHeightDots}px`;
-
-  /*
-    5. Labels
-  */
-
-  createLabels();
-
-  /*
-    6. JSON
-  */
-
-  const data = parseJsonData();
-
-  /*
-    7. Variables
-  */
-
-  const variables = createVariables(eplCode.value, data);
-
-  /*
-    8. Parse EPL
-  */
-
-  const objects = parseEpl(eplCode.value, variables, data);
-
-  /*
-    9. Labels
-  */
-
-  const labels = [...previewPaper.querySelectorAll(".epl-label")];
-
-  /*
-    10. Render
-  */
-
-  objects.forEach((object) => {
-    const layer = getLayerForX(object.x);
-
-    object.layer = layer;
-
-    object.localX = getLocalX(object.x, layer);
-
-    const label = labels[layer];
-
-    if (!label) {
-      return;
-    }
-
-    let element;
-
-    let bounds;
-
-    /*
-        TEXT
-      */
-
-    if (object.type === "text") {
-      bounds = getTextBounds(object);
-
-      element = createTextElement(object);
-    } else {
-
-    /*
-        BARCODE
-      */
-      bounds = getBarcodeBounds(object);
-
-      element = createBarcodeElement(object);
-    }
-
-    /*
-        Store bounds.
-      */
-
-    object.bounds = bounds;
-
-    /*
-        Validate.
-      */
-
-    validateObject(object, bounds);
-
-    /*
-        Boundary.
-      */
-
-    const boundary = document.createElement("div");
-
-    boundary.className = "object-boundary";
-
-    boundary.style.left = `${object.localX}px`;
-
-    boundary.style.top = `${object.y}px`;
-
-    boundary.style.width = `${Math.max(1, bounds.width)}px`;
-
-    boundary.style.height = `${Math.max(1, bounds.height)}px`;
-
-    label.appendChild(boundary);
-
-    /*
-        ACTUAL OBJECT
-
-        Text has z-index 100.
-      */
-
-    label.appendChild(element);
-
-    state.objects.push(object);
-  });
-
-  /*
-    Overlaps.
-  */
-
-  detectOverlaps(state.objects);
-
-  /*
-    Object count.
-  */
-
-  objectInfo.textContent = state.objects.length;
-
-  /*
-    Validation.
-  */
-
-  showValidation();
-
-  /*
-    Fit.
-  */
-
-  fitPreview();
-}
-
-/* ============================================================
-   VALIDATION UI
-============================================================ */
-
-function showValidation() {
-  validationMessages.innerHTML = "";
-
-  /*
-    Everything valid.
-  */
-
-  if (state.errors.length === 0 && state.warnings.length === 0) {
-    validationSummary.textContent = "Valid";
-
-    validationSummary.style.color = "#166534";
-
-    addValidationMessage("✓ Text and barcode objects detected.", "success");
-
-    statusInfo.textContent = "Valid";
-
-    statusInfo.className = "status-ready";
-
+   VALIDATION MESSAGE
+   ============================================================ */
+
+function addValidationMessage(message, type) {
+  if (!validationMessages) {
     return;
   }
 
-  /*
-    Errors.
-  */
-
-  if (state.errors.length > 0) {
-    validationSummary.textContent = `${state.errors.length} error(s)`;
-
-    validationSummary.style.color = "#991b1b";
-
-    statusInfo.textContent = "Errors";
-
-    statusInfo.className = "status-error";
-
-    state.errors.forEach((message) => {
-      addValidationMessage(message, "error");
-    });
-  }
-
-  /*
-    Warnings.
-  */
-
-  state.warnings.forEach((message) => {
-    addValidationMessage(message, "warning");
-  });
-
-  if (state.errors.length === 0 && state.warnings.length > 0) {
-    validationSummary.textContent = `${state.warnings.length} warning(s)`;
-
-    statusInfo.textContent = "Warnings";
-
-    statusInfo.className = "status-warning";
-  }
-}
-
-function addValidationMessage(message, type) {
   const element = document.createElement("div");
 
   element.className = `validation-message ${type}`;
@@ -1423,43 +1396,428 @@ function addValidationMessage(message, type) {
 }
 
 /* ============================================================
+   SHOW VALIDATION
+   ============================================================ */
+
+function showValidation() {
+  if (validationMessages) {
+    validationMessages.innerHTML = "";
+  }
+
+  /*
+     Show mapping.
+  */
+
+  if (state.mappings.length) {
+    state.mappings.forEach((mapping) => {
+      addValidationMessage(`${mapping.variable} → ${mapping.field}`, "success");
+    });
+  }
+
+  /*
+     Errors.
+  */
+
+  if (state.errors.length) {
+    if (validationSummary) {
+      validationSummary.textContent = `${state.errors.length} error(s)`;
+    }
+
+    if (statusInfo) {
+      statusInfo.textContent = "Errors";
+
+      statusInfo.className = "status-error";
+    }
+
+    state.errors.forEach((error) => {
+      addValidationMessage(error, "error");
+    });
+
+    return;
+  }
+
+  /*
+     Warnings.
+  */
+
+  state.warnings.forEach((warning) => {
+    addValidationMessage(warning, "warning");
+  });
+
+  if (validationSummary) {
+    validationSummary.textContent = state.warnings.length
+      ? `${state.warnings.length} warning(s)`
+      : "Valid";
+  }
+
+  if (statusInfo) {
+    statusInfo.textContent = state.warnings.length ? "Warnings" : "Valid";
+
+    statusInfo.className = state.warnings.length
+      ? "status-warning"
+      : "status-ready";
+  }
+
+  addValidationMessage(
+    `✓ ${state.objects.length} visual object(s) detected.`,
+    "success",
+  );
+}
+
+/* ============================================================
+   RENDER PREVIEW
+   ============================================================ */
+
+function renderPreview() {
+  /*
+     RESET
+  */
+
+  state.objects = [];
+
+  state.errors = [];
+
+  state.warnings = [];
+
+  state.rows = [];
+
+  state.mappings = [];
+
+  state.variables = {};
+
+  /*
+     JSON
+  */
+
+  const data = parseJsonData();
+
+  const rows = getRows(data);
+
+  state.rows = rows;
+
+  if (!rows.length) {
+    state.errors.push("No JSON row found.");
+
+    calculateDimensions(1);
+
+    if (previewPaper) {
+      previewPaper.innerHTML = "";
+    }
+
+    showValidation();
+
+    return;
+  }
+
+  /*
+     EPL
+  */
+
+  const code = String(eplCode?.value || "");
+
+  if (!code.trim()) {
+    state.errors.push("EPL code is empty.");
+
+    calculateDimensions(rows.length);
+
+    if (previewPaper) {
+      previewPaper.innerHTML = "";
+    }
+
+    showValidation();
+
+    return;
+  }
+
+  /*
+     =========================================
+     STEP 1
+     Read V00, V01, V02...
+     =========================================
+  */
+
+  const variables = extractVariables(code);
+
+  /*
+     =========================================
+     STEP 2
+     Read UniCommerce Velocity mapping
+     =========================================
+
+     Example:
+
+     ?
+     $row.getColumnValue('ProductCode')
+     $row.getColumnValue('MRP')
+
+     V00 -> ProductCode
+     V01 -> MRP
+  */
+
+  const mappingInfo = extractVelocityMapping(code);
+
+  state.mappings = mappingInfo.mappings;
+
+  /*
+     =========================================
+     STEP 3
+     IMPORTANT FIX
+     =========================================
+
+     Keep the EPL A/B commands.
+
+     Remove ONLY the foreach/mapping block.
+
+     This fixes the blank preview.
+  */
+
+  const renderableEpl = getRenderableEpl(code);
+
+  /*
+     =========================================
+     STEP 4
+     Determine number of rows
+     =========================================
+
+     If #foreach exists:
+        render ALL rows.
+
+     If no #foreach:
+        render only first row.
+  */
+
+  const foreachInfo = getForeachBlock(code);
+
+  const renderRows = foreachInfo.exists ? rows : [rows[0]];
+
+  /*
+     =========================================
+     STEP 5
+     PAPER
+     =========================================
+  */
+
+  calculateDimensions(renderRows.length);
+
+  /*
+     =========================================
+     STEP 6
+     CLEAR PAPER
+     =========================================
+  */
+
+  if (previewPaper) {
+    previewPaper.innerHTML = "";
+
+    previewPaper.style.position = "relative";
+
+    previewPaper.style.width = `${state.totalWidthDots}px`;
+
+    previewPaper.style.height = `${state.totalHeightDots}px`;
+
+    previewPaper.style.minHeight = `${state.totalHeightDots}px`;
+  }
+
+  /*
+     =========================================
+     STEP 7
+     CREATE LABELS
+     =========================================
+  */
+
+  const labels = createLabels(renderRows.length);
+
+  /*
+     =========================================
+     STEP 8
+     COMPILE EACH JSON ROW
+     =========================================
+  */
+
+  renderRows.forEach((row, rowIndex) => {
+    /*
+         Build V variables from Velocity ? mapping.
+      */
+
+    const rowVariables = buildVariables(row, mappingInfo.mappings, variables);
+
+    state.variables = rowVariables;
+
+    /*
+         Parse A/B commands.
+      */
+
+    const objects = parseEpl(renderableEpl, rowVariables, row);
+
+    /*
+         Render.
+      */
+
+    objects.forEach((object) => {
+      /*
+             X determines layer.
+          */
+
+      const layer = getLayerForX(object.x);
+
+      object.layer = layer;
+
+      object.rowIndex = rowIndex;
+
+      /*
+             X inside layer.
+          */
+
+      object.localX = getLocalX(object.x, layer);
+
+      /*
+             Find label.
+          */
+
+      const labelInfo = labels.find(
+        (item) => item.rowIndex === rowIndex && item.layerIndex === layer,
+      );
+
+      if (!labelInfo) {
+        state.errors.push(
+          `Could not find label for row ${rowIndex + 1}, layer ${layer + 1}.`,
+        );
+
+        return;
+      }
+
+      const label = labelInfo.element;
+
+      let element;
+
+      let bounds;
+
+      /*
+             TEXT
+          */
+
+      if (object.type === "text") {
+        bounds = getTextBounds(object);
+
+        element = createTextElement(object);
+      } else {
+        /*
+             BARCODE
+          */
+        bounds = getBarcodeBounds(object);
+
+        element = createBarcodeElement(object);
+      }
+
+      object.bounds = bounds;
+
+      /*
+             Validation.
+          */
+
+      validateObject(object, bounds, rowIndex);
+
+      /*
+             Boundary.
+          */
+
+      const boundary = document.createElement("div");
+
+      boundary.className = "object-boundary";
+
+      boundary.style.position = "absolute";
+
+      boundary.style.left = `${object.localX}px`;
+
+      boundary.style.top = `${object.y}px`;
+
+      boundary.style.width = `${Math.max(1, bounds.width)}px`;
+
+      boundary.style.height = `${Math.max(1, bounds.height)}px`;
+
+      boundary.style.pointerEvents = "none";
+
+      label.appendChild(boundary);
+
+      /*
+             Actual object.
+          */
+
+      label.appendChild(element);
+
+      state.objects.push(object);
+    });
+  });
+
+  /*
+     Overlaps.
+  */
+
+  detectOverlaps(state.objects);
+
+  /*
+     Object count.
+  */
+
+  if (objectInfo) {
+    objectInfo.textContent = state.objects.length;
+  }
+
+  /*
+     Validation.
+  */
+
+  showValidation();
+
+  /*
+     Fit.
+  */
+
+  fitPreview();
+}
+
+/* ============================================================
    ZOOM
-============================================================ */
+   ============================================================ */
 
 function applyZoom() {
+  if (!previewPaper) {
+    return;
+  }
+
   previewPaper.style.transform = `scale(${state.zoom})`;
 
   previewPaper.style.transformOrigin = "top left";
 
-  zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+  if (zoomValue) {
+    zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+  }
 
-  /*
-    Expand scroll area according to zoom.
-  */
+  if (previewCanvas && previewViewport) {
+    const width = state.totalWidthDots * state.zoom;
 
-  const scaledWidth = state.totalWidthDots * state.zoom;
+    const height = state.totalHeightDots * state.zoom;
 
-  const scaledHeight = state.totalHeightDots * state.zoom;
+    previewCanvas.style.width = `${Math.max(
+      width + 100,
+      previewViewport.clientWidth,
+    )}px`;
 
-  previewCanvas.style.width = `${Math.max(
-    scaledWidth + 100,
-    previewViewport.clientWidth,
-  )}px`;
-
-  previewCanvas.style.height = `${Math.max(
-    scaledHeight + 100,
-    previewViewport.clientHeight,
-  )}px`;
+    previewCanvas.style.height = `${Math.max(
+      height + 100,
+      previewViewport.clientHeight,
+    )}px`;
+  }
 }
 
 /* ============================================================
    FIT
-============================================================ */
+   ============================================================ */
 
 function fitPreview() {
-  /*
-    Don't fit if viewport is not ready.
-  */
+  if (!previewViewport || !previewPaper) {
+    return;
+  }
 
   if (previewViewport.clientWidth <= 0) {
     return;
@@ -1472,9 +1830,9 @@ function fitPreview() {
   const availableHeight = Math.max(100, previewViewport.clientHeight - 100);
 
   let newZoom = Math.min(
-    availableWidth / state.totalWidthDots,
+    availableWidth / Math.max(1, state.totalWidthDots),
 
-    availableHeight / state.totalHeightDots,
+    availableHeight / Math.max(1, state.totalHeightDots),
   );
 
   newZoom = Math.max(0.25, Math.min(newZoom, 2));
@@ -1485,127 +1843,182 @@ function fitPreview() {
 }
 
 /* ============================================================
+   SAMPLE DATA
+   ============================================================ */
+
+const SAMPLE_DATA = {
+  MRP: "999.00",
+  Brand: "Ethansports",
+  Color: "BLUE",
+  Size: "M",
+  SKU: "ETH-CAP-ESLC-BLUE",
+};
+
+/* ============================================================
+   SAMPLE EPL
+   ============================================================ */
+
+const SAMPLE_EPL = `FK"1"
+FS"1"
+
+V00,50,N,"" sku
+V01,50,N,""  mrp
+V02,50,N,""  size
+V03,50,N,""  color
+V04,50,N,""  brand
+
+A110,10,0,1,2,2,N,V04
+A20,50,0,1,1,1,N,"SKU : "V00
+A20,70,0,1,1,1,N,"SIZE : "V02
+A20,90,0,1,1,1,N,"MRP : "V01
+A20,110,0,1,1,1,N,"COLOR : "V03
+B20,135,0,1,1,1,40,Y,V00
+
+PA1,1
+FE
+
+#foreach($row in $rows)
+FR"1"
+?
+$row.getColumnValue('SKU')
+$row.getColumnValue('MRP')
+$row.getColumnValue('SIZE')
+$row.getColumnValue('COLOR')
+$row.getColumnValue('BRAND')
+#end`;
+
+/* ============================================================
    LOAD SAMPLE
-============================================================ */
+   ============================================================ */
 
 function loadSample() {
-  dataJson.value = JSON.stringify(SAMPLE_DATA, null, 2);
+  if (dataJson) {
+    dataJson.value = JSON.stringify(SAMPLE_DATA, null, 2);
+  }
 
   renderPreview();
 }
 
 /* ============================================================
    LOAD EXAMPLE
-============================================================ */
+   ============================================================ */
 
 function loadExample() {
-  eplCode.value = SAMPLE_EPL;
+  if (eplCode) {
+    eplCode.value = SAMPLE_EPL;
+  }
 
-  layers.value = "2";
+  if (layers) {
+    layers.value = "2";
+  }
 
   loadSample();
 }
 
 /* ============================================================
-   PREVIEW BUTTON
-============================================================ */
+   BUTTONS
+   ============================================================ */
 
-$("previewBtn").addEventListener("click", renderPreview);
+if ($("previewBtn")) {
+  $("previewBtn").addEventListener("click", renderPreview);
+}
 
-/* ============================================================
-   LOAD EXAMPLE
-============================================================ */
+if ($("loadExampleBtn")) {
+  $("loadExampleBtn").addEventListener("click", loadExample);
+}
 
-$("loadExampleBtn").addEventListener("click", loadExample);
+if ($("loadSampleBtn")) {
+  $("loadSampleBtn").addEventListener("click", loadSample);
+}
 
-/* ============================================================
-   LOAD SAMPLE
-============================================================ */
+if ($("clearBtn")) {
+  $("clearBtn").addEventListener("click", () => {
+    if (eplCode) {
+      eplCode.value = "";
+    }
 
-$("loadSampleBtn").addEventListener("click", loadSample);
-
-/* ============================================================
-   CLEAR
-============================================================ */
-
-$("clearBtn").addEventListener("click", () => {
-  eplCode.value = "";
-
-  renderPreview();
-});
+    renderPreview();
+  });
+}
 
 /* ============================================================
-   ZOOM IN
-============================================================ */
+   ZOOM BUTTONS
+   ============================================================ */
 
-$("zoomInBtn").addEventListener("click", () => {
-  state.zoom = Math.min(3, state.zoom + 0.1);
+if ($("zoomInBtn")) {
+  $("zoomInBtn").addEventListener("click", () => {
+    state.zoom = Math.min(3, state.zoom + 0.1);
 
-  applyZoom();
-});
+    applyZoom();
+  });
+}
 
-/* ============================================================
-   ZOOM OUT
-============================================================ */
+if ($("zoomOutBtn")) {
+  $("zoomOutBtn").addEventListener("click", () => {
+    state.zoom = Math.max(0.25, state.zoom - 0.1);
 
-$("zoomOutBtn").addEventListener("click", () => {
-  state.zoom = Math.max(0.25, state.zoom - 0.1);
+    applyZoom();
+  });
+}
 
-  applyZoom();
-});
-
-/* ============================================================
-   FIT
-============================================================ */
-
-$("fitBtn").addEventListener("click", fitPreview);
+if ($("fitBtn")) {
+  $("fitBtn").addEventListener("click", fitPreview);
+}
 
 /* ============================================================
-   SETTINGS LIVE UPDATE
-============================================================ */
+   SETTINGS
+   ============================================================ */
 
-[labelWidth, labelHeight, dpi, layers, gap].forEach((element) => {
-  element.addEventListener("input", renderPreview);
+[labelWidth, labelHeight, dpi, layers, gap]
+  .filter(Boolean)
+  .forEach((element) => {
+    element.addEventListener("input", renderPreview);
 
-  element.addEventListener("change", renderPreview);
-});
-
-/* ============================================================
-   EPL LIVE UPDATE
-============================================================ */
-
-eplCode.addEventListener("input", renderPreview);
+    element.addEventListener("change", renderPreview);
+  });
 
 /* ============================================================
-   JSON LIVE UPDATE
-============================================================ */
+   EPL LIVE
+   ============================================================ */
 
-dataJson.addEventListener("input", renderPreview);
+if (eplCode) {
+  eplCode.addEventListener("input", renderPreview);
+}
 
 /* ============================================================
-   TAB SUPPORT
-============================================================ */
+   JSON LIVE
+   ============================================================ */
 
-eplCode.addEventListener("keydown", (event) => {
-  if (event.key !== "Tab") {
-    return;
-  }
+if (dataJson) {
+  dataJson.addEventListener("input", renderPreview);
+}
 
-  event.preventDefault();
+/* ============================================================
+   TAB
+   ============================================================ */
 
-  const start = eplCode.selectionStart;
+if (eplCode) {
+  eplCode.addEventListener("keydown", (event) => {
+    if (event.key !== "Tab") {
+      return;
+    }
 
-  const end = eplCode.selectionEnd;
+    event.preventDefault();
 
-  eplCode.value =
-    eplCode.value.substring(0, start) + "    " + eplCode.value.substring(end);
+    const start = eplCode.selectionStart;
 
-  eplCode.selectionStart = eplCode.selectionEnd = start + 4;
-});
+    const end = eplCode.selectionEnd;
+
+    eplCode.value =
+      eplCode.value.substring(0, start) + "    " + eplCode.value.substring(end);
+
+    eplCode.selectionStart = eplCode.selectionEnd = start + 4;
+  });
+}
 
 /* ============================================================
    RESIZE
-============================================================ */
+   ============================================================ */
 
 window.addEventListener("resize", () => {
   if (state.zoom < 1) {
@@ -1617,14 +2030,18 @@ window.addEventListener("resize", () => {
 
 /* ============================================================
    INITIAL DATA
-============================================================ */
+   ============================================================ */
 
-eplCode.value = SAMPLE_EPL;
+if (eplCode && !eplCode.value.trim()) {
+  eplCode.value = SAMPLE_EPL;
+}
 
-dataJson.value = JSON.stringify(SAMPLE_DATA, null, 2);
+if (dataJson && !dataJson.value.trim()) {
+  dataJson.value = JSON.stringify(SAMPLE_DATA, null, 2);
+}
 
 /* ============================================================
    START
-============================================================ */
+   ============================================================ */
 
 renderPreview();

@@ -10,14 +10,12 @@ html,
 body {
   width: 100%;
   height: 100%;
-
   margin: 0;
   padding: 0;
 
   font-family: Arial, Helvetica, sans-serif;
 
   background: #f3f4f6;
-
   color: #111827;
 }
 
@@ -25,12 +23,16 @@ body {
   overflow: hidden;
 }
 
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 button {
   cursor: pointer;
-
   border: none;
-
-  font-family: inherit;
 }
 
 /* =========================================================
@@ -71,10 +73,16 @@ button {
   flex-shrink: 0;
 }
 
+.header-title {
+  min-width: 0;
+}
+
 .header-title h1 {
   margin: 0;
 
   font-size: 20px;
+
+  font-weight: 700;
 }
 
 .header-title p {
@@ -89,6 +97,8 @@ button {
   display: flex;
 
   gap: 8px;
+
+  flex-shrink: 0;
 }
 
 /* =========================================================
@@ -119,6 +129,8 @@ button {
   background: #374151;
 
   color: white;
+
+  font-weight: 600;
 }
 
 .secondary-btn:hover {
@@ -158,6 +170,8 @@ button {
 
   flex-wrap: wrap;
 
+  align-items: flex-end;
+
   gap: 15px;
 
   flex-shrink: 0;
@@ -179,6 +193,8 @@ button {
   color: #6b7280;
 
   text-transform: uppercase;
+
+  letter-spacing: 0.3px;
 }
 
 .setting-group input,
@@ -194,6 +210,17 @@ button {
   outline: none;
 
   background: white;
+
+  color: #111827;
+
+  font-size: 12px;
+}
+
+.setting-group input:focus,
+.setting-group select:focus {
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .input-with-unit {
@@ -221,13 +248,15 @@ button {
 .main-grid {
   flex: 1;
 
+  min-width: 0;
+
   min-height: 0;
 
   display: grid;
 
-  grid-template-columns:
-    48%
-    52%;
+  grid-template-columns: 50% 50%;
+
+  overflow: hidden;
 }
 
 /* =========================================================
@@ -266,7 +295,9 @@ button {
 ========================================================= */
 
 .panel-header {
-  padding: 12px 15px;
+  min-height: 55px;
+
+  padding: 10px 15px;
 
   border-bottom: 1px solid #e5e7eb;
 
@@ -276,6 +307,8 @@ button {
 
   justify-content: space-between;
 
+  gap: 10px;
+
   flex-shrink: 0;
 }
 
@@ -283,6 +316,8 @@ button {
   margin: 0;
 
   font-size: 14px;
+
+  font-weight: 700;
 }
 
 .panel-header span {
@@ -296,23 +331,95 @@ button {
 }
 
 /* =========================================================
+   EDITOR PANEL CONTENT
+========================================================= */
+
+/*
+   This is very important.
+
+   The left side has:
+   
+   1. EPL header
+   2. EPL editor
+   3. Sample header
+   4. Sample editor
+   5. Validation
+
+   The complete left side can scroll if necessary.
+*/
+
+.editor-panel {
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+.editor-panel::-webkit-scrollbar {
+  width: 9px;
+}
+
+.editor-panel::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.editor-panel::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+
+  border-radius: 5px;
+}
+
+.editor-panel::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* =========================================================
    EPL EDITOR
 ========================================================= */
 
-#eplCode {
-  flex: 1;
+/*
+   IMPORTANT:
 
-  min-height: 0;
+   EPL has its OWN height.
+
+   You can drag the bottom-right corner/edge
+   of the textarea to increase/decrease it.
+
+   Example:
+
+   250px
+   400px
+   600px
+   etc.
+*/
+
+#eplCode {
+  display: block;
 
   width: 100%;
 
+  height: 420px;
+
+  min-height: 150px;
+
+  max-height: 900px;
+
+  flex: 0 0 auto;
+
+  resize: vertical;
+
   padding: 15px;
+
+  margin: 0;
 
   border: none;
 
-  outline: none;
+  border-bottom: 2px solid #334155;
 
-  resize: none;
+  outline: none;
 
   background: #0f172a;
 
@@ -322,24 +429,92 @@ button {
 
   font-size: 13px;
 
-  line-height: 1.5;
+  line-height: 1.55;
 
-  overflow: auto;
+  white-space: pre;
+
+  overflow-x: auto;
+
+  overflow-y: auto;
+
+  tab-size: 2;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: #475569 #0f172a;
 }
 
 /* =========================================================
-   DATA
+   EPL RESIZE INDICATOR
+========================================================= */
+
+#eplCode::-webkit-resizer {
+  background: #475569;
+}
+
+/* =========================================================
+   EPL SCROLLBAR
+========================================================= */
+
+#eplCode::-webkit-scrollbar {
+  width: 10px;
+
+  height: 10px;
+}
+
+#eplCode::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+#eplCode::-webkit-scrollbar-thumb {
+  background: #475569;
+
+  border-radius: 5px;
+}
+
+#eplCode::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* =========================================================
+   EPL FOCUS
+========================================================= */
+
+#eplCode:focus {
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+
+/* =========================================================
+   EPL SELECTION
+========================================================= */
+
+#eplCode::selection {
+  background: #334155;
+
+  color: white;
+}
+
+/* =========================================================
+   SAMPLE DATA SECTION
 ========================================================= */
 
 .data-section {
+  width: 100%;
+
   padding: 10px 15px;
 
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #d1d5db;
+
+  border-bottom: 1px solid #e5e7eb;
 
   background: #f9fafb;
 
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
+
+/* =========================================================
+   SAMPLE HEADER
+========================================================= */
 
 .data-header {
   display: flex;
@@ -348,13 +523,21 @@ button {
 
   justify-content: space-between;
 
+  gap: 10px;
+
   margin-bottom: 8px;
+}
+
+.data-header > div {
+  min-width: 0;
 }
 
 .data-header h3 {
   margin: 0;
 
   font-size: 12px;
+
+  font-weight: 700;
 }
 
 .data-header span {
@@ -365,22 +548,44 @@ button {
   font-size: 10px;
 
   color: #6b7280;
+
+  line-height: 1.4;
 }
+
+/* =========================================================
+   SAMPLE JSON EDITOR
+========================================================= */
+
+/*
+   IMPORTANT:
+
+   Sample Data has its OWN height.
+
+   You can independently drag its bottom edge.
+
+   EPL size DOES NOT control this size.
+*/
 
 .json-editor {
   display: block;
 
   width: 100%;
 
-  height: 120px;
+  height: 160px;
 
-  padding: 9px;
+  min-height: 80px;
+
+  max-height: 600px;
 
   resize: vertical;
 
+  padding: 10px;
+
+  margin: 0;
+
   border: 1px solid #cbd5e1;
 
-  border-radius: 5px;
+  border-radius: 6px;
 
   outline: none;
 
@@ -392,11 +597,61 @@ button {
 
   font-size: 12px;
 
-  line-height: 1.4;
+  line-height: 1.5;
+
+  white-space: pre;
+
+  overflow-x: auto;
+
+  overflow-y: auto;
+
+  tab-size: 2;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: #94a3b8 #f8fafc;
 }
+
+/* =========================================================
+   SAMPLE RESIZE INDICATOR
+========================================================= */
+
+.json-editor::-webkit-resizer {
+  background: #94a3b8;
+}
+
+/* =========================================================
+   SAMPLE SCROLLBAR
+========================================================= */
+
+.json-editor::-webkit-scrollbar {
+  width: 9px;
+
+  height: 9px;
+}
+
+.json-editor::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.json-editor::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+
+  border-radius: 5px;
+}
+
+.json-editor::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* =========================================================
+   SAMPLE FOCUS
+========================================================= */
 
 .json-editor:focus {
   border-color: #2563eb;
+
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 /* =========================================================
@@ -404,11 +659,13 @@ button {
 ========================================================= */
 
 .json-status {
-  min-height: 14px;
+  min-height: 16px;
 
   margin-top: 5px;
 
   font-size: 10px;
+
+  line-height: 1.4;
 }
 
 .json-status.ok {
@@ -424,15 +681,39 @@ button {
 ========================================================= */
 
 .validation-section {
+  width: 100%;
+
   padding: 9px 15px;
 
   border-top: 1px solid #e5e7eb;
 
-  max-height: 145px;
+  background: white;
+
+  flex: 0 0 auto;
+
+  min-height: 80px;
+
+  max-height: 180px;
 
   overflow-y: auto;
 
-  flex-shrink: 0;
+  scrollbar-width: thin;
+
+  scrollbar-color: #cbd5e1 white;
+}
+
+.validation-section::-webkit-scrollbar {
+  width: 7px;
+}
+
+.validation-section::-webkit-scrollbar-track {
+  background: white;
+}
+
+.validation-section::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+
+  border-radius: 5px;
 }
 
 .validation-header {
@@ -441,6 +722,8 @@ button {
   justify-content: space-between;
 
   align-items: center;
+
+  gap: 10px;
 
   margin-bottom: 6px;
 }
@@ -453,6 +736,8 @@ button {
 
 .validation-header span {
   font-size: 10px;
+
+  color: #6b7280;
 }
 
 .validation-message {
@@ -463,6 +748,8 @@ button {
   border-radius: 4px;
 
   font-size: 10px;
+
+  line-height: 1.35;
 }
 
 .validation-message.success {
@@ -493,6 +780,8 @@ button {
   align-items: center;
 
   gap: 4px;
+
+  flex-shrink: 0;
 }
 
 #zoomValue {
@@ -501,12 +790,12 @@ button {
   text-align: center;
 
   font-size: 11px;
+
+  color: #374151;
 }
 
 /* =========================================================
    PREVIEW VIEWPORT
-
-   BOTH scrollbars are intentional.
 ========================================================= */
 
 .preview-viewport {
@@ -537,6 +826,34 @@ button {
     0 10px,
     10px -10px,
     -10px 0;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: #94a3b8 #e2e8f0;
+}
+
+/* =========================================================
+   PREVIEW SCROLLBAR
+========================================================= */
+
+.preview-viewport::-webkit-scrollbar {
+  width: 10px;
+
+  height: 10px;
+}
+
+.preview-viewport::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+.preview-viewport::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+
+  border-radius: 5px;
+}
+
+.preview-viewport::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 /* =========================================================
@@ -570,7 +887,7 @@ button {
 }
 
 /* =========================================================
-   LABEL
+   EPL LABEL
 ========================================================= */
 
 .epl-label {
@@ -583,6 +900,10 @@ button {
   overflow: hidden;
 }
 
+/* =========================================================
+   LAYER TITLE
+========================================================= */
+
 .layer-title {
   position: absolute;
 
@@ -594,16 +915,15 @@ button {
 
   font-size: 9px;
 
-  z-index: 2;
+  z-index: 200;
 
   pointer-events: none;
+
+  user-select: none;
 }
 
 /* =========================================================
-   TEXT
-
-   VERY IMPORTANT:
-   z-index 100
+   EPL TEXT
 ========================================================= */
 
 .epl-text {
@@ -619,7 +939,7 @@ button {
 
   white-space: pre;
 
-  color: #000;
+  color: #000000;
 
   font-family: Arial, Helvetica, sans-serif;
 
@@ -628,6 +948,8 @@ button {
   transform-origin: top left;
 
   pointer-events: none;
+
+  user-select: none;
 }
 
 /* =========================================================
@@ -642,6 +964,8 @@ button {
   transform-origin: top left;
 
   overflow: visible;
+
+  display: block;
 }
 
 .epl-barcode svg {
@@ -685,7 +1009,7 @@ button {
 }
 
 /* =========================================================
-   INFO
+   INFO PANEL
 ========================================================= */
 
 .info-panel {
@@ -714,6 +1038,8 @@ button {
   background: #f9fafb;
 
   display: flex;
+
+  align-items: center;
 
   gap: 5px;
 
@@ -757,26 +1083,54 @@ button {
     grid-template-columns: 1fr;
 
     height: auto;
+
+    overflow: visible;
   }
 
   .editor-panel {
-    min-height: 700px;
-
     border-right: none;
 
     border-bottom: 1px solid #d1d5db;
+
+    overflow-y: visible;
   }
 
   .preview-panel {
     min-height: 600px;
   }
+
+  #eplCode {
+    height: 450px;
+
+    min-height: 150px;
+
+    max-height: 900px;
+  }
+
+  .json-editor {
+    height: 180px;
+
+    min-height: 80px;
+
+    max-height: 600px;
+  }
+
+  .preview-viewport {
+    min-height: 600px;
+  }
 }
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media (max-width: 650px) {
   .topbar {
     flex-direction: column;
 
     align-items: flex-start;
+
+    padding: 12px 14px;
   }
 
   .header-actions {
@@ -790,6 +1144,93 @@ button {
   .settings-panel {
     display: grid;
 
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    padding: 10px 14px;
+
+    gap: 10px;
+  }
+
+  .setting-group {
+    min-width: 0;
+  }
+
+  .setting-group input,
+  .setting-group select {
+    width: 100%;
+  }
+
+  .input-with-unit {
+    width: 100%;
+  }
+
+  .input-with-unit input {
+    width: 100%;
+  }
+
+  .panel-header {
+    padding: 10px 12px;
+  }
+
+  #eplCode {
+    height: 400px;
+
+    min-height: 150px;
+
+    max-height: 800px;
+
+    padding: 12px;
+
+    font-size: 12px;
+  }
+
+  .data-section {
+    padding: 10px 12px;
+  }
+
+  .json-editor {
+    height: 160px;
+
+    min-height: 80px;
+
+    max-height: 500px;
+
+    font-size: 11px;
+  }
+
+  .validation-section {
+    padding: 9px 12px;
+  }
+
+  .preview-viewport {
+    min-height: 550px;
+
+    padding: 20px;
+  }
+
+  .info-panel {
+    padding: 8px 12px;
+  }
+}
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+  .settings-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .header-actions {
+    flex-direction: column;
+  }
+
+  .header-actions button {
+    width: 100%;
+  }
+
+  .data-header {
+    align-items: flex-start;
   }
 }
