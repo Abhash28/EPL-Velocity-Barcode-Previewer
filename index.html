@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>UniCommerce EPL Previewer</title>
+
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  </head>
+
+  <body>
+    <div class="app">
+      <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
+      <header class="topbar">
+        <div class="header-title">
+          <h1>EPL / Velocity Barcode Previewer</h1>
+
+          <p>UniCommerce label coordinate and barcode preview tool</p>
+        </div>
+
+        <div class="header-actions">
+          <button id="loadExampleBtn" class="secondary-btn">
+            Load 2 Layer Example
+          </button>
+
+          <button id="previewBtn" class="primary-btn">Preview</button>
+        </div>
+      </header>
+
+      <!-- =====================================================
+       SETTINGS
+  ====================================================== -->
+
+      <section class="settings-panel">
+        <div class="setting-group">
+          <label> Label Width </label>
+
+          <div class="input-with-unit">
+            <input
+              id="labelWidth"
+              type="number"
+              value="2"
+              min="0.1"
+              step="0.01"
+            />
+
+            <span> inch </span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label> Label Height </label>
+
+          <div class="input-with-unit">
+            <input
+              id="labelHeight"
+              type="number"
+              value="1"
+              min="0.1"
+              step="0.01"
+            />
+
+            <span> inch </span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label> Printer DPI </label>
+
+          <select id="dpi">
+            <option value="203" selected>203 DPI</option>
+
+            <option value="300">300 DPI</option>
+
+            <option value="600">600 DPI</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label> Layers </label>
+
+          <select id="layers">
+            <option value="1">1 Layer</option>
+
+            <option value="2" selected>2 Layers</option>
+
+            <option value="3">3 Layers</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label> Horizontal Gap </label>
+
+          <div class="input-with-unit">
+            <input id="gap" type="number" value="0.02" min="0" step="0.01" />
+
+            <span> inch </span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label> Sample Records </label>
+
+          <input id="sampleCount" type="number" value="1" min="1" max="20" />
+        </div>
+      </section>
+
+      <!-- =====================================================
+       MAIN
+  ====================================================== -->
+
+      <main class="main-grid">
+        <!-- ===================================================
+         LEFT EDITOR
+    ==================================================== -->
+
+        <section class="editor-panel">
+          <div class="panel-header">
+            <div>
+              <h2>EPL / Velocity Code</h2>
+
+              <span> Paste your actual UniCommerce template </span>
+            </div>
+
+            <button id="clearBtn" class="small-btn">Clear</button>
+          </div>
+
+          <!-- =================================================
+           EPL CODE
+      ================================================== -->
+
+          <textarea id="eplCode" spellcheck="false"></textarea>
+
+          <!-- =================================================
+           JSON DATA
+      ================================================== -->
+
+          <div class="data-section">
+            <div class="data-header">
+              <div>
+                <h3>Preview Sample Data</h3>
+
+                <span>
+                  Add unlimited fields such as SKU, Color, Size, MRP,
+                  ProductCode, Name, Barcode etc.
+                </span>
+              </div>
+
+              <button id="loadSampleBtn" class="small-btn">Load Sample</button>
+            </div>
+
+            <textarea
+              id="dataJson"
+              class="json-editor"
+              spellcheck="false"
+            ></textarea>
+
+            <div id="jsonStatus" class="json-status"></div>
+          </div>
+
+          <!-- =================================================
+           VALIDATION
+      ================================================== -->
+
+          <div class="validation-section">
+            <div class="validation-header">
+              <h3>Coordinate Validation</h3>
+
+              <span id="validationSummary"> Ready </span>
+            </div>
+
+            <div id="validationMessages"></div>
+          </div>
+        </section>
+
+        <!-- ===================================================
+         RIGHT PREVIEW
+    ==================================================== -->
+
+        <section class="preview-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Print Preview</h2>
+
+              <span id="previewInfo"> 2 × 1 inch </span>
+            </div>
+
+            <div class="preview-actions">
+              <button id="zoomOutBtn" class="small-btn">−</button>
+
+              <span id="zoomValue"> 100% </span>
+
+              <button id="zoomInBtn" class="small-btn">+</button>
+
+              <button id="fitBtn" class="small-btn">Fit</button>
+            </div>
+          </div>
+
+          <!-- =================================================
+           SCROLLABLE PREVIEW
+      ================================================== -->
+
+          <div id="previewViewport" class="preview-viewport">
+            <div id="previewCanvas" class="preview-canvas">
+              <div id="previewPaper" class="preview-paper"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- =====================================================
+       INFORMATION
+  ====================================================== -->
+
+      <section class="info-panel">
+        <div class="info-card">
+          <strong> Label </strong>
+
+          <span id="physicalInfo"> 2 × 1 inch </span>
+        </div>
+
+        <div class="info-card">
+          <strong> Printer </strong>
+
+          <span id="dotInfo"> 406 × 203 dots </span>
+        </div>
+
+        <div class="info-card">
+          <strong> Layers </strong>
+
+          <span id="layerInfo"> 2 </span>
+        </div>
+
+        <div class="info-card">
+          <strong> Objects </strong>
+
+          <span id="objectInfo"> 0 </span>
+        </div>
+
+        <div class="info-card">
+          <strong> Status </strong>
+
+          <span id="statusInfo" class="status-ready"> Ready </span>
+        </div>
+      </section>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

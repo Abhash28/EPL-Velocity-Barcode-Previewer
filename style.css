@@ -1,0 +1,795 @@
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+
+  margin: 0;
+  padding: 0;
+
+  font-family: Arial, Helvetica, sans-serif;
+
+  background: #f3f4f6;
+
+  color: #111827;
+}
+
+body {
+  overflow: hidden;
+}
+
+button {
+  cursor: pointer;
+
+  border: none;
+
+  font-family: inherit;
+}
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app {
+  width: 100%;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.topbar {
+  min-height: 70px;
+
+  padding: 12px 20px;
+
+  background: #111827;
+
+  color: white;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  flex-shrink: 0;
+}
+
+.header-title h1 {
+  margin: 0;
+
+  font-size: 20px;
+}
+
+.header-title p {
+  margin: 4px 0 0;
+
+  font-size: 12px;
+
+  color: #9ca3af;
+}
+
+.header-actions {
+  display: flex;
+
+  gap: 8px;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.primary-btn {
+  padding: 9px 16px;
+
+  border-radius: 6px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-weight: 600;
+}
+
+.primary-btn:hover {
+  background: #1d4ed8;
+}
+
+.secondary-btn {
+  padding: 9px 16px;
+
+  border-radius: 6px;
+
+  background: #374151;
+
+  color: white;
+}
+
+.secondary-btn:hover {
+  background: #4b5563;
+}
+
+.small-btn {
+  padding: 6px 10px;
+
+  border-radius: 5px;
+
+  background: #e5e7eb;
+
+  color: #111827;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+.small-btn:hover {
+  background: #d1d5db;
+}
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+.settings-panel {
+  padding: 12px 20px;
+
+  background: white;
+
+  border-bottom: 1px solid #d1d5db;
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 15px;
+
+  flex-shrink: 0;
+}
+
+.setting-group {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.setting-group label {
+  font-size: 10px;
+
+  font-weight: 700;
+
+  color: #6b7280;
+
+  text-transform: uppercase;
+}
+
+.setting-group input,
+.setting-group select {
+  height: 34px;
+
+  padding: 0 8px;
+
+  border: 1px solid #d1d5db;
+
+  border-radius: 5px;
+
+  outline: none;
+
+  background: white;
+}
+
+.input-with-unit {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+}
+
+.input-with-unit input {
+  width: 80px;
+}
+
+.input-with-unit span {
+  font-size: 11px;
+
+  color: #6b7280;
+}
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main-grid {
+  flex: 1;
+
+  min-height: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    48%
+    52%;
+}
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.editor-panel,
+.preview-panel {
+  min-width: 0;
+
+  min-height: 0;
+
+  background: white;
+}
+
+.editor-panel {
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border-right: 1px solid #d1d5db;
+}
+
+.preview-panel {
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   PANEL HEADER
+========================================================= */
+
+.panel-header {
+  padding: 12px 15px;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  flex-shrink: 0;
+}
+
+.panel-header h2 {
+  margin: 0;
+
+  font-size: 14px;
+}
+
+.panel-header span {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 10px;
+
+  color: #6b7280;
+}
+
+/* =========================================================
+   EPL EDITOR
+========================================================= */
+
+#eplCode {
+  flex: 1;
+
+  min-height: 0;
+
+  width: 100%;
+
+  padding: 15px;
+
+  border: none;
+
+  outline: none;
+
+  resize: none;
+
+  background: #0f172a;
+
+  color: #e5e7eb;
+
+  font-family: Consolas, "Courier New", monospace;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+
+  overflow: auto;
+}
+
+/* =========================================================
+   DATA
+========================================================= */
+
+.data-section {
+  padding: 10px 15px;
+
+  border-top: 1px solid #e5e7eb;
+
+  background: #f9fafb;
+
+  flex-shrink: 0;
+}
+
+.data-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+}
+
+.data-header h3 {
+  margin: 0;
+
+  font-size: 12px;
+}
+
+.data-header span {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 10px;
+
+  color: #6b7280;
+}
+
+.json-editor {
+  display: block;
+
+  width: 100%;
+
+  height: 120px;
+
+  padding: 9px;
+
+  resize: vertical;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 5px;
+
+  outline: none;
+
+  background: white;
+
+  color: #111827;
+
+  font-family: Consolas, "Courier New", monospace;
+
+  font-size: 12px;
+
+  line-height: 1.4;
+}
+
+.json-editor:focus {
+  border-color: #2563eb;
+}
+
+/* =========================================================
+   JSON STATUS
+========================================================= */
+
+.json-status {
+  min-height: 14px;
+
+  margin-top: 5px;
+
+  font-size: 10px;
+}
+
+.json-status.ok {
+  color: #166534;
+}
+
+.json-status.error {
+  color: #991b1b;
+}
+
+/* =========================================================
+   VALIDATION
+========================================================= */
+
+.validation-section {
+  padding: 9px 15px;
+
+  border-top: 1px solid #e5e7eb;
+
+  max-height: 145px;
+
+  overflow-y: auto;
+
+  flex-shrink: 0;
+}
+
+.validation-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 6px;
+}
+
+.validation-header h3 {
+  margin: 0;
+
+  font-size: 12px;
+}
+
+.validation-header span {
+  font-size: 10px;
+}
+
+.validation-message {
+  margin-bottom: 3px;
+
+  padding: 5px 7px;
+
+  border-radius: 4px;
+
+  font-size: 10px;
+}
+
+.validation-message.success {
+  background: #dcfce7;
+
+  color: #166534;
+}
+
+.validation-message.warning {
+  background: #fef3c7;
+
+  color: #92400e;
+}
+
+.validation-message.error {
+  background: #fee2e2;
+
+  color: #991b1b;
+}
+
+/* =========================================================
+   PREVIEW HEADER
+========================================================= */
+
+.preview-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+}
+
+#zoomValue {
+  min-width: 45px;
+
+  text-align: center;
+
+  font-size: 11px;
+}
+
+/* =========================================================
+   PREVIEW VIEWPORT
+
+   BOTH scrollbars are intentional.
+========================================================= */
+
+.preview-viewport {
+  flex: 1;
+
+  min-width: 0;
+
+  min-height: 0;
+
+  overflow-x: auto;
+
+  overflow-y: auto;
+
+  padding: 45px;
+
+  background-color: #f1f5f9;
+
+  background-image:
+    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+
+  background-size: 20px 20px;
+
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+}
+
+/* =========================================================
+   PREVIEW CANVAS
+========================================================= */
+
+.preview-canvas {
+  position: relative;
+
+  width: max-content;
+
+  min-width: 100%;
+
+  min-height: 100%;
+}
+
+/* =========================================================
+   PAPER
+========================================================= */
+
+.preview-paper {
+  position: relative;
+
+  background: white;
+
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+
+  transform-origin: top left;
+
+  margin: 0 0 45px 0;
+}
+
+/* =========================================================
+   LABEL
+========================================================= */
+
+.epl-label {
+  position: absolute;
+
+  background: white;
+
+  border: 1px dashed #9ca3af;
+
+  overflow: hidden;
+}
+
+.layer-title {
+  position: absolute;
+
+  left: 5px;
+
+  top: 3px;
+
+  color: #9ca3af;
+
+  font-size: 9px;
+
+  z-index: 2;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   TEXT
+
+   VERY IMPORTANT:
+   z-index 100
+========================================================= */
+
+.epl-text {
+  position: absolute;
+
+  z-index: 100;
+
+  display: block;
+
+  visibility: visible;
+
+  opacity: 1;
+
+  white-space: pre;
+
+  color: #000;
+
+  font-family: Arial, Helvetica, sans-serif;
+
+  line-height: 1;
+
+  transform-origin: top left;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   BARCODE
+========================================================= */
+
+.epl-barcode {
+  position: absolute;
+
+  z-index: 20;
+
+  transform-origin: top left;
+
+  overflow: visible;
+}
+
+.epl-barcode svg {
+  display: block;
+
+  overflow: visible;
+}
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.coordinate-grid {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1;
+
+  pointer-events: none;
+
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+
+  background-size: 20px 20px;
+}
+
+/* =========================================================
+   OBJECT BOUNDARY
+========================================================= */
+
+.object-boundary {
+  position: absolute;
+
+  z-index: 5;
+
+  pointer-events: none;
+
+  border: 1px solid rgba(37, 99, 235, 0.18);
+}
+
+/* =========================================================
+   INFO
+========================================================= */
+
+.info-panel {
+  padding: 8px 15px;
+
+  background: white;
+
+  border-top: 1px solid #d1d5db;
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  flex-shrink: 0;
+}
+
+.info-card {
+  padding: 6px 10px;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 5px;
+
+  background: #f9fafb;
+
+  display: flex;
+
+  gap: 5px;
+
+  font-size: 10px;
+}
+
+.info-card strong {
+  color: #6b7280;
+}
+
+.status-ready {
+  color: #166534;
+}
+
+.status-warning {
+  color: #92400e;
+}
+
+.status-error {
+  color: #991b1b;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+  body {
+    overflow: auto;
+  }
+
+  .app {
+    height: auto;
+
+    min-height: 100vh;
+
+    overflow: visible;
+  }
+
+  .main-grid {
+    grid-template-columns: 1fr;
+
+    height: auto;
+  }
+
+  .editor-panel {
+    min-height: 700px;
+
+    border-right: none;
+
+    border-bottom: 1px solid #d1d5db;
+  }
+
+  .preview-panel {
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 650px) {
+  .topbar {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions button {
+    flex: 1;
+  }
+
+  .settings-panel {
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
