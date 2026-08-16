@@ -1861,11 +1861,11 @@ const SAMPLE_DATA = {
 const SAMPLE_EPL = `FK"1"
 FS"1"
 
-V00,50,N,"" sku
-V01,50,N,""  mrp
-V02,50,N,""  size
-V03,50,N,""  color
-V04,50,N,""  brand
+V00,50,N,""
+V01,50,N,""
+V02,50,N,""
+V03,50,N,""
+V04,50,N,""
 
 A110,10,0,1,2,2,N,V04
 A20,50,0,1,1,1,N,"SKU : "V00
